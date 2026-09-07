@@ -1,4 +1,4 @@
-# MoMo SMS Data Processing and Analytics System, Team 1 
+# MoMo SMS Data Processing and Analytics System, Team 1
 
 ## Team members
 
@@ -14,12 +14,13 @@ The system extracts, cleans, categorizes, and stores the transaction data in
 a relational database, and provides a frontend dashboard for analyzing and
 visualizing the data.
 
-## Links 
+## Links
 
 - Architecture Diagram: https://miro.com/app/board/uXjVHpg8KfI=/?share_link_id=992757985832
 - Scrum Board: https://alustudent-team-lszz7o93.atlassian.net/jira/software/projects/LMS/summary?atlOrigin=eyJpIjoiN2U4YzY0ZWRmZDY5NDBlMDlhNDZlZTYzZWMxMTc5YWEiLCJwIjoiaiJ9
 
-## Setup 
+## Setup
+
 Setup instructions will be added as the project is developed.
 
 ## Project Structure
@@ -47,8 +48,28 @@ momo-sms-data-processing/
 │       ├── etl.log
 │       └── dead_letter/
 │
-└── etl/
-    ├── __init__.py
-    ├── config.py
-    ├── parse_xml.py
-    └── clean_normalize.py
+├── etl/
+│   ├── __init__.py
+│   ├── config.py
+│   ├── parse_xml.py
+│   ├── clean_normalize.py
+│   ├── categorize.py
+│   ├── load_db.py
+│   └── run.py
+│
+├── api/            # optional bonus
+│   ├── __init__.py
+│   ├── app.py
+│   ├── db.py
+│   └── schemas.py
+│
+├── scripts/
+│   ├── run_etl.sh
+│   ├── export_json.sh
+│   └── serve_frontend.sh
+│
+└── tests/
+    ├── test_parse_xml.py
+    ├── test_clean_normalize.py
+    └── test_categorize.py
+```
