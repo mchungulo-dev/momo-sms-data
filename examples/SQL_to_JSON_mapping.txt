@@ -1,0 +1,212 @@
+SQL-to-JSON Mapping for the MoMo Database
+SQL stores information in tables and rows. JSON stores information as objects and arrays. SQL-to-JSON mapping explains how information from each database table appears in a JSON response.
+For this project, the database has these tables:
+users
+transactions
+transaction_categories
+transaction_has_categories
+System_logs
+complete _transaction
+
+The JSON examples use the final state of the supplied SQL data. Therefore, transaction 1 has a fee of 200.00 after the update, and system log 6 is not included because it was deleted.
+2. Basic mapping idea
+A SQL column usually becomes a JSON property with a similar name.
+SQL row:
+transaction_id = 2
+amount = 8374.00
+fee = 0.00
+
+JSON object:
+{ "transaction_id": 2, "amount": 8374.00, "fee": 0.00 }
+
+The names are kept similar so that it is easy to understand where each JSON value came from.
+
+3. Transactions table mapping
+The transactions table stores the main transaction information.
+SQL column
+JSON property
+Meaning
+transaction_id
+transaction_id
+Unique transaction number
+sender_id
+sender_id
+ID of the sender
+receiver_id
+receiver_id
+ID of the receiver
+amount
+amount
+Amount of money involved
+fee
+fee
+Transaction fee
+created_at
+created_at
+Date and time of the transaction
+raw_sms_body
+raw_sms_body
+Original SMS message
+
+A transaction row becomes one JSON object:
+{
+  "transaction_id": 2,
+  "sender_id": 2,
+  "receiver_id": 3,
+  "amount": 8374.00,
+  "fee": 0.00,
+  "created_at": "2026-01-05T14:30:00",
+  "raw_sms_body": "You have paid 8374 RWF to DELUXE Supermarket..."
+}
+
+All five transaction rows are placed in one JSON array.
+4. Users table mapping
+The users table stores information about people or organizations connected to transactions.
+SQL column
+JSON property
+Meaning
+user_id
+user_id
+Unique user number
+full_name
+full_name
+User or organization name
+phone_number
+phone_number
+User phone number
+user_type
+user_type
+For example, CUSTOMER or MERCHANT
+created_at
+created_at
+Date the user was created
+
+Example:
+{ "user_id": 2, "full_name": "Butera Jean Aime", "phone_number": null, "user_type": null, "created_at": null }
+
+5. Transaction categories mapping
+The transaction_categories table stores category information.
+SQL column
+JSON property
+Meaning
+category_id
+category_id
+Unique category number
+category_name
+category_name
+Name of the category
+description
+description
+Explanation of the category
+
+Example:
+{ "category_id": 1, "category_name": null, "description": null }
+
+The category name and description are null because the SQL did not include the rows from transaction_categories. The category IDs are known because they appear in the junction-table insert statements.
+6. Junction table mapping
+The transaction_has_categories table connects transactions to categories.
+SQL column
+JSON property
+Meaning
+transaction_id
+transaction_id
+The transaction being categorized
+category_id
+category_id
+The category assigned to the transaction
+
+Example SQL rows:
+(5, 1), (5, 6)
+
+These rows mean that transaction 5 has two categories: category 1 and category 6.
+The JSON representation is:
+{ "transaction_id": 5, "category_ids": [1, 6] }
+7. System logs mapping
+The system_logs table records actions performed while processing transactions.
+SQL column
+JSON property
+Meaning
+log_id
+log_id
+Unique log number
+user_id
+user_id
+User connected to the log, if available
+transaction_id
+transaction_id
+Related transaction, if available
+log_level
+log_level
+INFO, WARNING, or ERROR
+action_performed
+action_performed
+Action such as PARSE or LOAD
+status
+status
+SUCCESS or FAILED
+error_message
+error_message
+Error explanation, or null
+created_at
+created_at
+Date and time of the log
+
+Example:
+{ "log_id": 1, "user_id": 1, "transaction_id": 1, "log_level": "INFO", "action_performed": "PARSE", "status": "SUCCESS", "error_message": null }
+
+A transaction can have many logs, so logs are represented as an array called system_logs.
+
+
+8. Complete nested JSON example
+This example uses transaction 5 because it demonstrates the many-to-many category relationship.
+{
+  "transaction_id": 5,
+  "amount": 30100.00,
+  "fee": 300.00,
+  "created_at": "2026-01-07T16:20:00",
+  "raw_sms_body": "You have sent 30100 RWF to Butera jean Aime...",
+  "sender": {
+    "user_id": 5,
+    "full_name": null,
+    "phone_number": null,
+    "user_type": null
+  },
+  "receiver": {
+    "user_id": 2,
+    "full_name": "Butera Jean Aime",
+    "phone_number": null,
+    "user_type": null
+  },
+  "categories": [
+    { "category_id": 1, "category_name": null, "description": null },
+    { "category_id": 6, "category_name": null, "description": null }
+  ],
+  "system_logs": [
+    {
+      "log_id": 5,
+      "user_id": 5,
+      "transaction_id": 5,
+      "log_level": "WARNING",
+      "action_performed": "LOAD",
+      "status": "SUCCESS",
+      "error_message": "Duplicate category tag ignored"
+    }
+  ]
+}
+9. Relationship summary
+Database relationship
+JSON result
+One user sends many transactions
+sender_id or nested sender object
+One user receives many transactions
+receiver_id or nested receiver object 
+One transaction has many logs
+system_logs array
+One transaction has many categories
+category_ids array or categories array of objects 
+One category belongs to many transactions
+The same category can appear in many transactions' arrays
+A log without a transaction
+A separate system-level log object
+
+
