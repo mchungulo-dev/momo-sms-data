@@ -1,0 +1,42 @@
+{
+  "transaction_id": 5,
+  "amount": 30100.00,
+  "fee": 300.00,
+  "created_at": "2026-01-07T16:20:00",
+  "raw_sms_body": "You have sent 30100 RWF to Butera jean Aime...",
+  "sender": {
+    "user_id": 5,
+    "full_name": null,
+    "phone_number": null,
+    "user_type": null
+  },
+  "receiver": {
+    "user_id": 2,
+    "full_name": "Butera Jean Aime",
+    "phone_number": null,
+    "user_type": null
+  },
+  "categories": [
+    {
+      "category_id": 1,
+      "category_name": null,
+      "description": null
+    },
+    {
+      "category_id": 6,
+      "category_name": null,
+      "description": null
+    }
+  ],
+  "system_logs": [
+    {
+      "log_id": 5,
+      "user_id": 5,
+      "transaction_id": 5,
+      "log_level": "WARNING",
+      "action_performed": "LOAD",
+      "status": "SUCCESS",
+      "error_message": "Duplicate category tag ignored"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+[
+  {
+    "transaction_id": 1,
+    "sender_id": 1,
+    "receiver_id": 2,
+    "amount": 14032.00,
+    "fee": 200.00,
+    "created_at": "2026-01-05T09:12:00",
+    "raw_sms_body": "You have sent 14032 RWF to Butera Jean Aime..."
+  },
+  {
+    "transaction_id": 2,
+    "sender_id": 2,
+    "receiver_id": 3,
+    "amount": 8374.00,
+    "fee": 0.00,
+    "created_at": "2026-01-05T14:30:00",
+    "raw_sms_body": "You have paid 8374 RWF to DELUXE Supermarket..."
+  },
+  {
+    "transaction_id": 3,
+    "sender_id": null,
+    "receiver_id": 1,
+    "amount": 19690.00,
+    "fee": 0.00,
+    "created_at": "2026-01-06T08:00:00",
+    "raw_sms_body": "You have received 19690 RWF deposit..."
+  },
+  {
+    "transaction_id": 4,
+    "sender_id": 4,
+    "receiver_id": null,
+    "amount": 4840.00,
+    "fee": 100.00,
+    "created_at": "2026-01-06T10:45:00",
+    "raw_sms_body": "You have withdrawn 4840 RWF via agent..."
+  },
+  {
+    "transaction_id": 5,
+    "sender_id": 5,
+    "receiver_id": 2,
+    "amount": 30100.00,
+    "fee": 300.00,
+    "created_at": "2026-01-07T16:20:00",
+    "raw_sms_body": "You have sent 30100 RWF to Butera jean Aime..."
+  }
+]

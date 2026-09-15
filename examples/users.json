@@ -1,0 +1,37 @@
+[
+  {
+    "user_id": 1,
+    "full_name": null,
+    "phone_number": null,
+    "user_type": null,
+    "created_at": null
+  },
+  {
+    "user_id": 2,
+    "full_name": "Butera Jean Aime",
+    "phone_number": null,
+    "user_type": null,
+    "created_at": null
+  },
+  {
+    "user_id": 3,
+    "full_name": "DELUXE Supermarket",
+    "phone_number": null,
+    "user_type": "MERCHANT",
+    "created_at": null
+  },
+  {
+    "user_id": 4,
+    "full_name": null,
+    "phone_number": null,
+    "user_type": null,
+    "created_at": null
+  },
+  {
+    "user_id": 5,
+    "full_name": null,
+    "phone_number": null,
+    "user_type": null,
+    "created_at": null
+  }
+]
