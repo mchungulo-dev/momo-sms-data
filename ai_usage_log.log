@@ -1,0 +1,4 @@
+In Our Team, we didn't use AI for a huge portion of our work, instead we used AI in these Areas:
+- As the whole team, we brainstormed how our ERD will look like, and executed that on our own
+- While creating data dictionary (Memory, China and Yves), we asked AI how comments/documentation are added to columns in SQL DML
+- I, Yves, used Claude Code to better understand how to properly perform perform JOIN as I wanted to do INNER JOIN on the users table to get sender's and receiver's details 
