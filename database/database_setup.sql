@@ -108,4 +108,47 @@ INSERT INTO transaction_categories (category_name, description) VALUES
 ('Withdrawal', 'Cash withdrawal from an agent'),
 ('Deposit', 'Cash deposit into a MoMo account'),
 ('International', 'Cross-border transfer tag');
+-- Transactions
+INSERT INTO transactions (sender_id, receiver_id, amount, fee, created_at, raw_sms_body) VALUES
+(1, 2, 14032.00, 150.00, '2026-01-05 09:12:00', 'You have sent 14032 RWF to Butera Jean Aime...'),
+(2, 3, 8374.00, 0.00, '2026-01-05 14:30:00', 'You have paid 8374 RWF to DELUXE Supermarket...'),
+(NULL, 1, 19690.00, 0.00, '2026-01-06 08:00:00', 'You have received 19690 RWF deposit...'),
+(4, NULL, 4840.00, 100.00, '2026-01-06 10:45:00', 'You have withdrawn 4840 RWF via agent...'),
+(5, 2, 30100.00, 300.00, '2026-01-07 16:20:00', 'You have sent 30100 RWF to Butera jean Aime...');
 
+-- Transaction_Has_Categories (junction table)
+INSERT INTO transaction_has_categories (transaction_id, category_id) VALUES
+(1, 1),
+(2, 3),
+(3, 5),
+(4, 4),
+(5, 1),
+(5, 6);
+
+-- System Logs
+INSERT INTO system_logs (user_id, transaction_id, log_level, action_performed, status, error_message) VALUES
+(1, 1, 'INFO', 'PARSE', 'SUCCESS', NULL),
+(2, 2, 'INFO', 'LOAD', 'SUCCESS', NULL),
+(NULL, NULL, 'ERROR', 'PARSE', 'FAILED', 'Unrecognized SMS format: missing amount field'),
+(3, 4, 'INFO', 'CATEGORIZE', 'SUCCESS', NULL),
+(5, 5, 'WARNING', 'LOAD', 'SUCCESS', 'Duplicate category tag ignored'),
+(NULL, NULL, 'ERROR', 'PARSE', 'FAILED', 'XML snippet could not be decoded');
+
+-- -------------------------------------------------------
+-- SAMPLE CRUD OPERATIONS (we use these to test)
+-- -------------------------------------------------------
+-- CREATE
+INSERT INTO users (full_name, phone_number, user_type)
+VALUES ('Test User', '+250781457023', 'CUSTOMER');
+
+-- READ
+SELECT t.transaction_id, u1.full_name AS sender, u2.full_name AS receiver, t.amount
+FROM transactions t
+LEFT JOIN users u1 ON t.sender_id = u1.user_id
+LEFT JOIN users u2 ON t.receiver_id = u2.user_id;
+
+-- UPDATE
+UPDATE transactions SET fee = 200.00 WHERE transaction_id = 1;
+
+-- DELETE
+DELETE FROM system_logs WHERE log_id = 6;
