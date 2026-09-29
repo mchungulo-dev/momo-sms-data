@@ -51,4 +51,25 @@ class TransactionStore:
             raise TransactionNotFound(f"Transaction {transaction_id} not found")
         return self._transactions[transaction_id]
 
+    def create_transaction(self, body):
+        transaction = _validate(body, required=True)
+        with self._lock:
+            transaction["id"] = self._next_id
+            self._next_id += 1
+            self._transactions[transaction["id"]] = transaction
+        return transaction
+    
+    def update_transaction(self, transaction_id, body):
+        changes = _validate(body, required=False)
+        with self._lock:
+            transaction = self.get_transaction(transaction_id)
+            transaction.update(changes)
+        return transaction
+
+    def delete_transaction(self, transaction_id):
+        with self._lock:
+            self.get_transaction(transaction_id)
+            del self._transactions[transaction_id]
+
+
    
