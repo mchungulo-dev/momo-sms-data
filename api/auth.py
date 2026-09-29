@@ -1,19 +1,3 @@
-"""MySQL-backed registration and authentication for the MoMo API.
-
-Required environment variables:
-    MOMO_DB_PASSWORD: password for the MySQL user
-
-Optional environment variables:
-    MOMO_DB_HOST: default 127.0.0.1
-    MOMO_DB_PORT: default 3306
-    MOMO_DB_USER: default momo_app
-    MOMO_DB_NAME: default momo
-    ADMIN_INVITE_CODE: private code for creating an admin account
-
-Install the driver with:
-    pip install mysql-connector-python
-"""
-
 from __future__ import annotations
 
 import base64
