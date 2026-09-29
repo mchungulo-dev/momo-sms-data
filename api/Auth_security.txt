@@ -1,0 +1,4 @@
+Basic Authentication is simple and easy to implement, but it has several security weaknesses.
+The username and password are sent with every request.
+Although the credentials are Base64-encoded, Base64 does not encryption and can easily be reversed.   If HTTPS is not used, attackers may intercept the credentials over the network. 
+Basic Authentication also does not provide built-in token expiration, refresh tokens, multi-factor authentication, or fine-grained permissions.  Because of these reasons, Basic Authentication is acceptable for simple internal tools or demonstrations, but stronger authentication metthods like JWT is recommended because:
