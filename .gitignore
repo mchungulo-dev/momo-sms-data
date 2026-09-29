@@ -31,3 +31,6 @@ htmlcov/
 .DS_Store
 .vscode/
 .idea/
+
+# API audit trail
+audit.log

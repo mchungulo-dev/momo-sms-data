@@ -18,7 +18,35 @@ This project processes MoMo (Mobile Money) SMS data provided in XML format. The 
 
 ## Setup
 
-Setup instructions will be added as the project is developed.
+Requirements: Python 3.10+ and a running MySQL server (users for Basic Auth are stored there).
+
+1. Create the database and an app user (once):
+
+   ```bash
+   mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS momo;
+   CREATE USER IF NOT EXISTS 'momo_app'@'%' IDENTIFIED BY 'MomoApp#2026';
+   GRANT ALL PRIVILEGES ON momo.* TO 'momo_app'@'%';"
+   ```
+
+2. Install dependencies and start the API:
+
+   ```bash
+   python3 -m venv .venv && source .venv/bin/activate
+   pip install -r requirements.txt
+   export MOMO_DB_PASSWORD='MomoApp#2026' ADMIN_INVITE_CODE='team1-invite'
+   python api/server.py
+   ```
+
+   The server loads the parsed `dsa/data/transactions.json` into memory and listens on `http://127.0.0.1:8000`. Data resets on restart.
+
+3. Create an admin account (only admins can POST, PUT and DELETE):
+
+   ```bash
+   curl -X POST http://127.0.0.1:8000/register -H "Content-Type: application/json" \
+     -d '{"username":"team1admin","email":"team1admin@example.com","password":"Team1#Secure2026","invite_code":"team1-invite"}'
+   ```
+
+   Without the `invite_code` the account is a `viewer` (GET only). Passwords need 12+ characters with upper and lower case letters, a number and a symbol.
 
 ## Project Structure
 
@@ -54,11 +82,16 @@ momo-sms-data-processing/
 │   ├── load_db.py
 │   └── run.py
 │
-├── api/            # optional bonus
-│   ├── __init__.py
-│   ├── app.py
-│   ├── db.py
-│   └── schemas.py
+├── api/
+│   ├── server.py       # REST API (http.server)
+│   ├── auth.py         # Basic Auth + users in MySQL
+│   └── data.py         # in-memory transaction store
+│
+├── dsa/
+│   ├── modified_sms_v2.xml
+│   ├── parse_data.py   # XML -> JSON
+│   ├── search_compare.py
+│   └── data/transactions.json
 │
 ├── scripts/
 │   ├── run_etl.sh
@@ -172,6 +205,144 @@ DELETE FROM system_logs WHERE log_id = 6;
 ```
 
 The full set of table definitions, seed data, and these queries live in `database/database_setup.sql`.
+
+## API Documentation
+
+Base URL: `http://127.0.0.1:8000`. Every `/transactions` request needs Basic Auth (`curl -u username:password`). Bodies are JSON.
+
+| Method | Endpoint | Description | Role |
+|---|---|---|---|
+| POST | `/register` | Create a user (no auth) | none |
+| GET | `/transactions` | List all transactions | viewer, operator, admin |
+| GET | `/transactions/{id}` | Get one transaction | viewer, operator, admin |
+| POST | `/transactions` | Add a transaction | operator, admin |
+| PUT | `/transactions/{id}` | Update fields of a transaction | operator, admin |
+| DELETE | `/transactions/{id}` | Delete a transaction | admin |
+
+Transaction fields: `type`, `amount` (required on POST), and optionally `timestamp`, `sender`, `receiver`, `fee`, `balance`, `transaction_id`, `raw_sms_body`. The `id` is assigned by the server.
+
+**GET /transactions/1**
+
+```bash
+curl -u 'team1admin:Team1#Secure2026' http://127.0.0.1:8000/transactions/1
+```
+
+```json
+{"id": 1, "type": "received", "timestamp": "2024-05-10 16:30:51", "amount": 2000.0, "sender": "Jane Smith", "sender_id": "013", "balance": 2000.0, "transaction_id": "76662021700", "raw_sms_body": "You have received 2000 RWF from Jane Smith ..."}
+```
+
+**POST /transactions** (requires an `Idempotency-Key` header; sending the same key again returns the first result instead of a duplicate)
+
+```bash
+curl -u 'team1admin:Team1#Secure2026' -X POST http://127.0.0.1:8000/transactions \
+  -H "Content-Type: application/json" -H "Idempotency-Key: team1-post-1" \
+  -d '{"type":"payment","amount":7777,"receiver":"Team1 Test","timestamp":"2026-09-29 10:00:00"}'
+```
+
+```json
+{"type": "payment", "amount": 7777, "receiver": "Team1 Test", "timestamp": "2026-09-29 10:00:00", "id": 1692}
+```
+
+**PUT /transactions/1692**
+
+```bash
+curl -u 'team1admin:Team1#Secure2026' -X PUT http://127.0.0.1:8000/transactions/1692 \
+  -H "Content-Type: application/json" -d '{"amount":8888,"fee":100}'
+```
+
+```json
+{"type": "payment", "amount": 8888, "receiver": "Team1 Test", "timestamp": "2026-09-29 10:00:00", "id": 1692, "fee": 100}
+```
+
+**DELETE /transactions/1692**
+
+```bash
+curl -u 'team1admin:Team1#Secure2026' -X DELETE http://127.0.0.1:8000/transactions/1692
+```
+
+```json
+{"message": "Transaction 1692 deleted"}
+```
+
+### Error codes
+
+| Code | When |
+|---|---|
+| 400 | Invalid JSON, unknown field, missing `type`/`amount`, negative amount, missing `Idempotency-Key` |
+| 401 | Missing or wrong credentials (also after 5 failed attempts in 60 s from the same IP) |
+| 403 | Your role can't use this method (e.g. a viewer sending DELETE) |
+| 404 | Transaction or endpoint not found |
+| 405 | Unsupported method (HEAD, PATCH) |
+| 409 | Username or email already registered |
+| 411 / 413 | Missing `Content-Length` / body larger than 1 MB |
+
+Errors look like `{"error": "Transaction 1692 not found"}`.
+
+## Data Structures & Algorithms
+
+`dsa/search_compare.py` finds 20 random transactions by `id` two ways, 1000 times each:
+
+- **Linear search**: loop through the list until the id matches.
+- **Dictionary lookup**: build `{id: transaction}` once, then `index[id]`.
+
+Run it:
+
+```bash
+python3 dsa/search_compare.py
+```
+
+Our result (1691 records):
+
+| Method | Time per search |
+|---|---|
+| Linear search | ~15.4 µs |
+| Dictionary lookup | ~0.04 µs (~420x faster) |
+
+**Why the dictionary is faster:** linear search checks records one by one, so its time grows with the list size (O(n)). A dictionary hashes the id to jump straight to its slot, so it takes about the same time no matter how many records there are (O(1) on average). The API uses a dictionary for this reason.
+
+**Other options:** keep the records sorted by id and use binary search (O(log n), no extra memory for a hash table), or use a balanced binary search tree / database B-tree index, which also supports fast range queries such as "all transactions between two dates".
+
+## Testing & Validation (screenshots)
+
+Start the server and register `team1admin` as in [Setup](#setup), then run each command in a second terminal and take one screenshot per step. `-i` shows the status code.
+
+1. **Successful GET with auth** → `200 OK`
+
+   ```bash
+   curl -i -u 'team1admin:Team1#Secure2026' http://127.0.0.1:8000/transactions/1
+   ```
+
+2. **Wrong credentials** → `401 Unauthorized`
+
+   ```bash
+   curl -i -u 'team1admin:WrongPass#1' http://127.0.0.1:8000/transactions
+   ```
+
+3. **Successful POST** → `201 Created`, note the returned `id` (1692 on a fresh start)
+
+   ```bash
+   curl -i -u 'team1admin:Team1#Secure2026' -X POST http://127.0.0.1:8000/transactions \
+     -H "Content-Type: application/json" -H "Idempotency-Key: team1-post-1" \
+     -d '{"type":"payment","amount":7777,"receiver":"Team1 Test","timestamp":"2026-09-29 10:00:00"}'
+   ```
+
+4. **Successful PUT** → `200 OK` with the new amount
+
+   ```bash
+   curl -i -u 'team1admin:Team1#Secure2026' -X PUT http://127.0.0.1:8000/transactions/1692 \
+     -H "Content-Type: application/json" -d '{"amount":8888,"fee":100}'
+   ```
+
+5. **Successful DELETE** → `200 OK`, then the same GET returns `404`
+
+   ```bash
+   curl -i -u 'team1admin:Team1#Secure2026' -X DELETE http://127.0.0.1:8000/transactions/1692
+   curl -i -u 'team1admin:Team1#Secure2026' http://127.0.0.1:8000/transactions/1692
+   ```
+
+6. **DSA comparison**: screenshot the output of `python3 dsa/search_compare.py`.
+
+Save them in `screenshots/`. Tip: 5 wrong logins within 60 s block your IP for a minute, so run step 2 only once.
 
 ## Status
 

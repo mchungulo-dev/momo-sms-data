@@ -260,10 +260,10 @@ class TransactionRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
 
-def create_server(host: str, port: int, xml_path: str | Path | None) -> ThreadingHTTPServer:
+def create_server(host: str, port: int, json_path: str | Path | None) -> ThreadingHTTPServer:
     """Create a configured server. Kept separate to make testing easier."""
     initialize_user_database()
-    store = TransactionStore(xml_path) if xml_path else TransactionStore()
+    store = TransactionStore(json_path) if json_path else TransactionStore()
     TransactionRequestHandler.store = store
     return ThreadingHTTPServer((host, port), TransactionRequestHandler)
 
@@ -273,20 +273,20 @@ def main() -> None:
     parser.add_argument("--host", default=os.getenv("API_HOST", "127.0.0.1"))
     parser.add_argument("--port", type=int, default=int(os.getenv("API_PORT", "8000")))
     parser.add_argument(
-        "--xml",
+        "--json",
         type=Path,
-        default=Path(os.getenv("SMS_XML_PATH", "modified_sms_v2.xml")),
-        help="Path to modified_sms_v2.xml; omit --xml to start with an empty store",
+        default=Path(os.getenv("SMS_JSON_PATH", Path(__file__).resolve().parent.parent / "dsa" / "data" / "transactions.json")),
+        help="Path to the parsed transactions.json",
     )
     args = parser.parse_args()
 
-    xml_path: Path | None = args.xml if args.xml.exists() else None
-    if args.xml and not args.xml.exists():
-        print(f"Warning: XML file not found at {args.xml}; starting with empty data")
+    json_path: Path | None = args.json if args.json.exists() else None
+    if not args.json.exists():
+        print(f"Warning: JSON file not found at {args.json}; starting with empty data")
 
-    server = create_server(args.host, args.port, xml_path)
+    server = create_server(args.host, args.port, json_path)
     print(f"MoMo Transactions API running at http://{args.host}:{args.port}")
-    print("Credentials are read from API_USERNAME/API_PASSWORD environment variables.")
+    print(f"Loaded {len(server.RequestHandlerClass.store.list_transactions())} transactions; users are checked against MySQL.")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
