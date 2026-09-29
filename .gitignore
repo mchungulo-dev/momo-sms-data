@@ -7,3 +7,27 @@ data/db.sqlite3
 data/logs/*.log
 data/logs/dead_letter/*
 !data/logs/dead_letter/.gitkeep
+
+.venv/
+env/
+
+*.pyo
+*.egg-info/
+build/
+dist/
+
+# tooling
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Local databases
+*.sqlite3
+*.db
+
+# editors' files
+.DS_Store
+.vscode/
+.idea/
