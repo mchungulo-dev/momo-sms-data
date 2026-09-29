@@ -296,7 +296,7 @@ Our result (1691 records):
 | Method | Time per search |
 |---|---|
 | Linear search | ~15.4 µs |
-| Dictionary lookup | ~0.04 µs (~420x faster) |
+| Dictionary lookup | ~0.04 µs (~357x faster) |
 
 **Why the dictionary is faster:** linear search checks records one by one, so its time grows with the list size (O(n)). A dictionary hashes the id to jump straight to its slot, so it takes about the same time no matter how many records there are (O(1) on average). The API uses a dictionary for this reason.
 
